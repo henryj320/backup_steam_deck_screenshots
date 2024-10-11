@@ -1,0 +1,32 @@
+{
+    "games": [
+        { "id": 7, "name": "SteamOS Game Mode", "year": 0},
+        { "id": 35140, "name": "Batman - Arkham Asylum", "year": 2009},
+        { "id": 200260, "name": "Batman - Arkham City", "year": 2011},
+        { "id": 201870, "name": "Assassins Creed - Revelations", "year": 2011},
+        { "id": 238010, "name": "Deus Ex - Human Revolution", "year": 2012},
+        { "id": 268500, "name": "XCOM 2", "year": 2016},
+        { "id": 275850, "name": "No Mans Sky", "year": 2016},
+        { "id": 367520, "name": "Hollow Knight", "year": 2017},
+        { "id": 409710, "name": "Bioshock Remastered", "year": 2016},
+        { "id": 504230, "name": "Celeste", "year": 2018},
+        { "id": 582160, "name": "Assassins Creed - Origins", "year": 2017},
+        { "id": 920210, "name": "Lego Star Wars - The Skywalker Saga", "year": 2022},
+        { "id": 1172380, "name": "Star Wars Jedi - Fallen Order", "year": 2019},
+        { "id": 1817070, "name": "Marvels Spider Man Remastered", "year": 2022},
+        { "id": 1902490, "name": "Aperture Desk Job", "year": 2022},
+        { "id": 2353303, "name": "Super Metroid", "year": 1994},
+        { "id": 2512020, "name": "Europa", "year": 2024},
+        { "id": 4255172, "name": "Super Meat Boy Forever", "year": 2022},
+        { "id": 4630282, "name": "Assassins Creed Directors Cut", "year": 2008},
+        { "id": 5698431, "name": "Mario Kart 8", "year": 2014},
+        { "id": 7953897, "name": "Tails of Iron", "year": 2021},
+        { "id": 8762994, "name": "Tomb Raider", "year": 2013},
+        { "id": 10956301, "name": "Rocket League", "year": 2015},
+        { "id": 11194899, "name": "Splinter Cell Conviction", "year": 2010},
+        { "id": 11503524, "name": "Minecraft", "year": 2009},
+        { "id": 12028599, "name": "Legend of Zelda - Breath of the Wild", "year": 2017},
+        { "id": 12440190, "name": "Emulattion Station DE", "year": 0},
+        { "id": 14741207, "name": "Rise of the Tomb Raider", "year": 2015}
+    ]
+}

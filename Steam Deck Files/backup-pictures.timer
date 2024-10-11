@@ -1,0 +1,11 @@
+[Unit]
+Description=Timer to run backup-pictures.service.
+
+[Timer]
+# OnCalendar=*-*-* 02:01:00
+OnBootSec=10min
+OnUnitActiveSec=2h
+Unit=backup-pictures.service
+
+[Install]
+WantedBy=timers.target
