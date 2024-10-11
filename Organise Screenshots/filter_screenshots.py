@@ -4,6 +4,7 @@ import json
 import os
 import re
 import shutil
+from datetime import datetime
 
 from dotenv import load_dotenv  # type: ignore # noqa: F401
 
@@ -40,6 +41,9 @@ if __name__ == "__main__":
         data = json.load(json_file)
     games = data["games"]
 
+    directories_created = 0
+    images_moved = 0
+
     # For each item in the Dict:
     for game in games:
         # Record the details.
@@ -54,6 +58,7 @@ if __name__ == "__main__":
         # Create the directory if not already created.
         if not os.path.exists(destination_path):
             os.makedirs(destination_path)
+            directories_created = directories_created + 1
 
         # Copy images from "source/id/screenshots" to "destination/name (year)" if not already copied.
         for root, dirs, files in os.walk(source_path):
@@ -71,8 +76,13 @@ if __name__ == "__main__":
                 # Create the directory if it doesn't exist.
                 if not os.path.exists(destination_file_dir):
                     os.makedirs(destination_file_dir)
+                    directories_created = directories_created + 1
 
                 # Copy the file over if it doesn't exist.
                 if not os.path.exists(destination_file):
                     shutil.copy2(source_file, destination_file)
-                    print(f"Copied: {source_file} -> {destination_file}")
+                    # print(f"Copied: {source_file} -> {destination_file}")
+                    images_moved = images_moved + 1
+
+    completed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{completed_at} - Created {directories_created} directories and copied {images_moved} images")
