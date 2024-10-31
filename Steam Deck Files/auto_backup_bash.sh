@@ -7,6 +7,11 @@ if ! ping -c 1 "$server"; then
     exit 1
 fi
 
+if [ ! -d "/mnt/SharedFolder" ]; then
+  sudo mkdir /mnt/SharedFolder
+  echo "'/mnt/SharedFolder' created."
+fi
+
 sudo mount -t cifs //192.168.1.20/SharedFolder /mnt/SharedFolder -o username=henry,password=46472,uid=1000,gid=1000
 
 source="/home/deck/.local/share/Steam/userdata/96470878/760/remote/"
