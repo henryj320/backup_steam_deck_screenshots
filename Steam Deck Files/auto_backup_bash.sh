@@ -46,4 +46,21 @@ cd $path_to_repo
 # Call the Python script with Click arguments
 "$path_to_repo"backend/backend.py "$source" "$target" --overwrite "$overwrite" --condition "$condition" --dry_run "$dry_run"
 
+
+# Specify the output file.
+output_file="/mnt/SharedFolder/Henry/Logs/steam_deck_ip.txt"
+
+# Get the IP address.
+ip_address=$(ip -4 addr show | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | grep -v '^127\.')
+
+
+# Check if IP address was successfully retrieved.
+if [ -n "$ip_address" ]; then
+  # Write the IP address to the output file
+  echo "$ip_address" > "$output_file"
+  echo "IP address saved to $output_file"
+else
+  echo "Failed to retrieve IP address."
+fi
+
 sudo umount /mnt/SharedFolder

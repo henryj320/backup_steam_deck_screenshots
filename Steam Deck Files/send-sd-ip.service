@@ -1,0 +1,11 @@
+[Unit]
+Description=Send the Steam Deck IP address to /mnt/SharedFolder/Henry/Logs/steam_deck_ip.txt
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/deck/Software/send_steam_deck_ip/send_steam_deck_ip.sh
+RemainAfterExit=false
+
+[Install]
+WantedBy=default.target

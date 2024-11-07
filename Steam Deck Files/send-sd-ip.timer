@@ -1,0 +1,11 @@
+[Unit]
+Description=Timer to run send-sd-ip.service.
+
+[Timer]
+# OnCalendar=*-*-* 23:01:00
+OnBootSec=15min
+OnUnitActiveSec=24h
+Unit=send-sd-ip.service
+
+[Install]
+WantedBy=timers.target
