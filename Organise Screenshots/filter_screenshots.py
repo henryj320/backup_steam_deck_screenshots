@@ -5,7 +5,9 @@ import os
 import re
 import shutil
 from datetime import datetime
+import re
 
+import requests
 from dotenv import load_dotenv  # type: ignore # noqa: F401
 
 # Read the .env variables.
@@ -108,6 +110,60 @@ def reformat_filename_gamingpc(filename: str) -> str:
         return filename
 
 
+def get_game_details(game_id: int, games: list) -> tuple:
+
+    game_details_url = f"https://store.steampowered.com/api/appdetails?appids={game_id}"
+
+    try:
+        response = requests.get(game_details_url)
+
+        data = response.json()
+        # print(data)
+
+        # If a non-Steam game.
+        try:
+            # Required because of Steam-side bug that sets game_id to 9223372036854775807 if number is too large.
+            response_success = data[str(game_id)]["success"]
+        except KeyError:
+            response_success = False
+        found = False
+        if not response_success:
+            for game in games:
+                if game["id"] == int(game_id):
+                    game_name = game["name"]
+                    game_date = game["year"]
+                    found = True
+                    subdirectory = f"{game_name} ({game_date})"
+
+            if not found:
+                print(games)
+                print(f"{game_id}")
+                return False, ""
+            return True, subdirectory
+
+        # Sanitise the name.
+        game_name = data[str(game_id)]["data"]["name"]
+        game_name = game_name.replace(":", " -")
+        game_name = game_name.replace("'", "")
+        sanitized_name = re.sub(r'[<>:"/\\|?*©™®]', '', game_name)
+        sanitized_name = sanitized_name.strip()
+
+        game_year = data[str(game_id)]["data"]["release_date"]["date"]
+        # print(type(game_year))
+        # print(game_year)
+        game_year_only = game_year.split(" ")[2]
+
+        # Print the sanitized name
+        # print(f"Sanitized filename: {sanitized_name}")
+        # print(game_name)
+        # print(game_year_only)
+
+        return True, f"{sanitized_name} ({game_year_only})"
+
+    except requests.exceptions.RequestException as e:
+        print(e)
+
+
 def run_gamingpc(games: list) -> None:
     """Run with commands for a Linux-based gaming PC.
 
@@ -117,7 +173,7 @@ def run_gamingpc(games: list) -> None:
     directories_created = 0
     images_moved = 0
 
-    # For each item in the Dict:
+    # Create the directories.
     for game in games:
         # Record the details.
         # game_id = game["id"]
@@ -145,17 +201,22 @@ def run_gamingpc(games: list) -> None:
             relative_path = os.path.relpath(source_file, source_path)
 
             game_id = file_name.split("_")[0]
-            found = False
-            for game in games:
-                if game["id"] == int(game_id):
-                    game_name = game["name"]
-                    game_date = game["year"]
-                    found = True
-                    subdirectory = f"{game_name} ({game_date})"
+            # found = False
+            # for game in games:
+            #     if game["id"] == int(game_id):
+            #         game_name = game["name"]
+            #         game_date = game["year"]
+            #         found = True
+            #         subdirectory = f"{game_name} ({game_date})"
 
-            if not found:
-                print(games)
-                print(f"{game_id}")
+            # if not found:
+            #     print(games)
+            #     print(f"{game_id}")
+            #     return
+            game_detail_returned, subdirectory = get_game_details(int(game_id), games)
+
+            if not game_detail_returned:
+                # Failed because missing game ID
                 return
 
             no_gameid = file_name.split("_")[1]
@@ -173,8 +234,8 @@ def run_gamingpc(games: list) -> None:
             destination_file_dir = os.path.dirname(destination_file)
 
 
-            print(destination_file_dir)
-            print("HER")
+            # print(destination_file_dir)
+            # print("HER")
 
             # Create the directory if it doesn't exist.
             if not os.path.exists(destination_file_dir):
@@ -203,4 +264,9 @@ if __name__ == "__main__":
         run_steamdeck(games)
     if device == "GAMINGPC":
         run_gamingpc(games)
+        # print(get_game_details("359550", games))
         # reformat_filename_gamingpc('20240721231538')
+    # for game in games:
+        # print(get_game_details(game["id"], games))
+        # print(game["id"])
+        # print(type(game["id"]))

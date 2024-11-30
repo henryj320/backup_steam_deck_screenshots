@@ -1,6 +1,6 @@
 # backup_steam_deck_screenshots
 
-Last update: 2024-10-11 20:43
+Last update: 2024-11-30 22:15
 <br><br>
 
 A small repository containing the service files, timers and Python scripts required to back up Steam Deck pictures onto an alternative location.
