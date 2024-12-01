@@ -4,8 +4,8 @@ import json
 import os
 import re
 import shutil
+import time
 from datetime import datetime
-import re
 
 import requests
 from dotenv import load_dotenv  # type: ignore # noqa: F401
@@ -46,45 +46,99 @@ def run_steamdeck(games: list) -> None:
     directories_created = 0
     images_moved = 0
 
-    # For each item in the Dict:
-    for game in games:
-        # Record the details.
-        game_id = game["id"]
-        game_name = game["name"]
-        game_year = game["year"]
+    # Create the directories.
+    # for game in games:
+    #     # Record the details.
+    #     game_id = game["id"]
+    #     game_name = game["name"]
+    #     game_year = game["year"]
 
-        source_path = f"{source}/{game_id}/screenshots"
-        # Change destination based on if the year is set or not.
-        destination_path = f"{dest}/{game_name} ({game_year})" if int(game_year) != 0 else f"{dest}/{game_name}"
+    #     source_path = f"{source}/{game_id}/screenshots"
+    #     # Change destination based on if the year is set or not.
+    #     destination_path = f"{dest}/{game_name} ({game_year})" if int(game_year) != 0 else f"{dest}/{game_name}"
 
-        # Create the directory if not already created.
-        if not os.path.exists(destination_path):
-            os.makedirs(destination_path)
-            directories_created = directories_created + 1
+    #     # Create the directory if not already created.
+    #     if not os.path.exists(destination_path):
+    #         os.makedirs(destination_path)
+    #         directories_created = directories_created + 1
 
-        # Copy images from "source/id/screenshots" to "destination/name (year)" if not already copied.
-        for root, dirs, files in os.walk(source_path):
-            # Make it so thumbnails aren't copied.
-            dirs[:] = [d for d in dirs if d != "thumbnails"]
 
-            for file_name in files:
-                source_file = os.path.join(root, file_name)
-                relative_path = os.path.relpath(source_file, source_path)
+    destination_path = dest
+    current_game = ""
+    current_game_id = ""
+    subdirectory = ""
+    # Copy images from "source/id/screenshots" to "destination/name (year)" if not already copied.
+    for root, dirs, files in os.walk(source):
+        # Make it so thumbnails aren't copied.
+        dirs[:] = [d for d in dirs if d != "thumbnails"]
 
-                new_file_name = reformat_filename_steamdeck(file_name)
-                destination_file = os.path.join(destination_path, os.path.dirname(relative_path), new_file_name)
-                destination_file_dir = os.path.dirname(destination_file)
+        # print(root)
+        # print(dirs)
+        # print (files)
 
-                # Create the directory if it doesn't exist.
-                if not os.path.exists(destination_file_dir):
-                    os.makedirs(destination_file_dir)
-                    directories_created = directories_created + 1
+        # print("FILES:")
+        # print(files)
 
-                # Copy the file over if it doesn't exist.
-                if not os.path.exists(destination_file):
-                    shutil.copy2(source_file, destination_file)
-                    # print(f"Copied: {source_file} -> {destination_file}")
-                    images_moved = images_moved + 1
+        for file_name in files:
+            # print("FILE NAME:")
+            # print(file_name)
+            source_file = os.path.join(root, file_name)
+            # relative_path = os.path.relpath(source_file, source)
+
+            new_file_name = reformat_filename_steamdeck(file_name)
+            # destination_file = os.path.join(destination_path, os.path.dirname(relative_path), new_file_name)
+            # destination_file_dir = os.path.dirname(destination_file)
+
+            # print("")
+            # print(source)
+
+            # Get game_id from the source_file
+            # print("SOURCE FILE:")
+            # print(source_file)
+            game_id = str(source_file.split(source)[1].split("/")[0])
+
+            # Doesn't recall the SteamAPI unless its a new game.
+            if game_id != current_game_id:
+                current_game_id = game_id
+                # print(f"{game_id} is the different to {current_game_id}")
+                # print(type(game_id))
+                # print(type(current_game_id))
+                game_detail_returned, subdirectory = get_game_details(int(game_id), games)
+                # print(game_detail_returned)
+                # print(subdirectory)
+                if current_game != subdirectory:
+                    current_game = subdirectory
+                    print(f"Moving on to {current_game}")
+
+            if not game_detail_returned:
+                # Failed because missing game ID.
+                return
+
+
+            # print(source_file)
+            # print(destination_path)
+            # print(relative_path)
+            # print(os.path.dirname(relative_path), new_file_name)
+            # print(new_file_name)
+            # print(destination_file)
+            # print(destination_file_dir)
+            destination_file = os.path.join(
+                destination_path, subdirectory, new_file_name
+            )
+            destination_file_dir = os.path.dirname(destination_file)
+            # print(destination_file)
+            # print(destination_file_dir)
+            # print("")
+            # Create the directory if it doesn't exist.
+            if not os.path.exists(destination_file_dir):
+                os.makedirs(destination_file_dir)
+                directories_created = directories_created + 1
+
+            # # Copy the file over if it doesn't exist.
+            if not os.path.exists(destination_file):
+                shutil.copy2(source_file, destination_file)
+                # print(f"Copied: {source_file} -> {destination_file}")
+                images_moved = images_moved + 1
 
     completed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     print(f"{completed_at} - Created {directories_created} directories and copied {images_moved} images")
@@ -112,7 +166,10 @@ def reformat_filename_gamingpc(filename: str) -> str:
 
 def get_game_details(game_id: int, games: list) -> tuple:
 
-    game_details_url = f"https://store.steampowered.com/api/appdetails?appids={game_id}"
+    game_details_url = f"https://store.steampowered.com/api/appdetails?appids={str(game_id)}"
+
+    # print("GAME ID:")
+    # print(game_id)
 
     try:
         response = requests.get(game_details_url)
@@ -126,6 +183,13 @@ def get_game_details(game_id: int, games: list) -> tuple:
             response_success = data[str(game_id)]["success"]
         except KeyError:
             response_success = False
+        except TypeError:
+            # Something else went wrong
+            response_success = False
+            # if game_id != 2512020:
+            # print("TYPE ERROR ENTERED")
+            # Looks like the API genuinely returns "null" sometimes. Just have to wait it out.
+            time.sleep(10)
         found = False
         if not response_success:
             for game in games:
@@ -139,6 +203,7 @@ def get_game_details(game_id: int, games: list) -> tuple:
                 print(games)
                 print(f"{game_id}")
                 return False, ""
+            # print(subdirectory)
             return True, subdirectory
 
         # Sanitise the name.
@@ -216,7 +281,7 @@ def run_gamingpc(games: list) -> None:
             game_detail_returned, subdirectory = get_game_details(int(game_id), games)
 
             if not game_detail_returned:
-                # Failed because missing game ID
+                # Failed because missing game ID.
                 return
 
             no_gameid = file_name.split("_")[1]
@@ -254,6 +319,9 @@ def run_gamingpc(games: list) -> None:
 
 
 if __name__ == "__main__":
+    
+    start_time = time.time()
+
     # Convert the .json into a Dict.
     with open(gameids_file) as json_file:
         data = json.load(json_file)
@@ -264,6 +332,10 @@ if __name__ == "__main__":
         run_steamdeck(games)
     if device == "GAMINGPC":
         run_gamingpc(games)
+
+    end_time = time.time()
+    elapsed = end_time - start_time
+    print(f"Time taken: {elapsed:.4f} seconds")
         # print(get_game_details("359550", games))
         # reformat_filename_gamingpc('20240721231538')
     # for game in games:
