@@ -25,7 +25,7 @@ Screenshots are uploaded to the server using a Bash script.
 
 There is also *.service* and *.timer* files to allow regularly scheduling the upload. To set up files to regularly upload, follow these steps:
 
-1. Adjust the Bash script as required.
+1. Adjust the Bash script as required. Make sure it is executable with ` chmod +x `.
 2. Copy the *.service* and *.timer* files into "/home/deck/.config/systemd/user/".
 3. Run these commands:
 
@@ -34,18 +34,18 @@ There is also *.service* and *.timer* files to allow regularly scheduling the up
 systemctl --user daemon-reload
 
 # Start the service and timer.
-systemctl --user start backup-pictures.service
-systemctl --user start backup-pictures.timer
+systemctl --user start sync_screenshots.service
+systemctl --user start sync_screenshots.timer
 
 # Allow the files to run on restart.
-systemctl --user enable backup-pictures.service
-systemctl --user enable backup-pictures.timer
+systemctl --user enable sync_screenshots.service
+systemctl --user enable sync_screenshots.timer
 
 # Check that the timer is running.
 systemctl --user list-timers --all
 ```
 
-You can also check the logs with ` journalctl --user -xe -u backup-pictures `.
+You can also check the logs with ` journalctl --user -xe -u sync_screenshots `.
 
 ### Server-Side
 

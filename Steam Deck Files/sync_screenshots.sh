@@ -48,10 +48,10 @@ rsync $rsync_flags "$source" "$remote_user@$remote_server:$remote_directory"
 
 
 # Get this device's local IP address.
-device_ip=$(hostname -I | awk '{print $1}')
+device_ip=$(ip route get 1.1.1.1 | awk '{print $7; exit}')
 
 # Get this device's hostname.
-device_hostname=$(hostname)
+device_hostname=$(cat /etc/hostname 2>/dev/null || cat /proc/sys/kernel/hostname 2>/dev/null)
 
 remote_ip_directory="/home/casa/locations/games/Screenshots/IPs/"
 
