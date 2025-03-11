@@ -1,0 +1,11 @@
+[Unit]
+Description=Timer to run sync_screenshots.service.
+
+[Timer]
+# OnCalendar=*-*-* 02:01:00
+OnBootSec=10min
+OnUnitActiveSec=2h
+Unit=sync_screenshots.service
+
+[Install]
+WantedBy=timers.target
