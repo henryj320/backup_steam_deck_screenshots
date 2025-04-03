@@ -16,18 +16,31 @@ start_end_progress "⚙️ Starting backup process"
 
 echo
 show_progress "Pulling screenshots from Steam Deck"
-/home/software/repositories/backup_steam_deck_screenshots/Server\ Files/pull_screenshots.sh
-show_progress "Completed pull_screenshots.sh"
+# Continues if Steam Deck is offline.
+if /home/software/repositories/backup_steam_deck_screenshots/Server\ Files/pull_screenshots.sh; then
+    show_progress "Completed pulling screenshots from Steam Deck"
+else
+    show_progress "Failed pulling screenshots from Steam Deck. Continuing"
+fi
+echo
+
+show_progress "Pulling screenshots from Gaming PC"
+# Continues if Gaming PC is offline.
+if /home/software/repositories/backup_steam_deck_screenshots/Server\ Files/pull_screenshots_gaming_pc.sh; then
+    show_progress "Completed pulling screenshots from Gaming PC"
+else
+    show_progress "Failed pulling screenshots from Gaming PC. Continuing"
+fi
 echo
 
 show_progress "Filtering Steam Deck screenshots"
 python3 /home/software/repositories/backup_steam_deck_screenshots/Organise-Steam-Deck/filter_screenshots.py
-show_progress "Completed filter_screenshots.py (Steam-Deck)"
+show_progress "Completed filtering Steam Deck screenshots"
 echo
 
 show_progress "Filtering Gaming PC screenshots"
 python3 /home/software/repositories/backup_steam_deck_screenshots/Organise-Be-Quiet-PC/filter_screenshots.py
-show_progress "Completed filter_screenshots.py (Be-Quiet-PC)"
+show_progress "Completed filtering Gaming PC screenshots"
 echo
 
 start_end_progress "🎉 All tasks completed successfully!"
