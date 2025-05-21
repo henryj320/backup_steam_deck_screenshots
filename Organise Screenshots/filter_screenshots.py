@@ -46,6 +46,12 @@ def run_steamdeck(games: list) -> None:
     directories_created = 0
     images_moved = 0
 
+    # TODO:
+    # Whole logic needs to change
+    # It currently does for each item in game-ids.json
+    # Needs to instead do for every item in the filepath
+    # Aligned more with run_gamingpc()
+
     # For each item in the Dict:
     for game in games:
         # Record the details.
@@ -157,25 +163,25 @@ def run_gamingpc(games: list) -> None:
 
             if not found:
                 print(f"Game ID not present in game-ids.json: {game_id}")
+                print(f"\nPredicted game name:\n{predict_game(game_id)}")
+                response = input("Is this name correct? (y/n): ").strip().lower()
+                if response == "y":
+                    add_game_to_json(gameids_file, int(game_id), predict_game(game_id))
+                    print("Added to game-ids.json. Rerun script now.")
+                else:
+                    print("game-ids.json not updated.")
                 return
 
             no_gameid = file_name.split("_")[1]
             new_file_name = reformat_filename_gamingpc(no_gameid)
-            # print("HERE")
-            # print(f"Dest path - {destination_path}")
-            # print(f"Rel Path os.path - {os.path.dirname(relative_path)}")
-            # print(f"Source - {source_file}")
-            # print(f"Sub - {subdirectory}")
-            # print(f"Rel Path - {relative_path}")
-            # print(f"New Filename - {new_file_name}")
             destination_file = os.path.join(
                 destination_path, os.path.dirname(relative_path), subdirectory, new_file_name
             )
             destination_file_dir = os.path.dirname(destination_file)
 
 
-            print(destination_file_dir)
-            print("HER")
+            # print(destination_file_dir)
+            # print("HER")
 
             # Create the directory if it doesn't exist.
             if not os.path.exists(destination_file_dir):
@@ -211,9 +217,13 @@ def predict_game(game_id: str):
     # Clean up the name.
     name = name.replace(":", " -")
     name = name.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+    name = name.replace("'s", "s -")
+    name = name.replace("'", "")
+
     name = re.sub(r"[®™©]", "", name)
     name = re.sub(r'[\\/*?:"<>|]', "", name)
     name = name.strip()
+
     
     # Extract year using regex.
     match = re.search(r"\b(19|20)\d{2}\b", release_date_str)
@@ -225,6 +235,42 @@ def predict_game(game_id: str):
         return name
     else:
         return None
+    
+
+def add_game_to_json(gameids_file: str, game_id: int, directory_name: str):
+    match = re.match(r"^(.*?)\s*\((\d{4})\)$", directory_name)
+    if not match:
+        print("Directory name format should be 'Game Name (Year)'")
+        return False
+
+    name, year_str = match.groups()
+    year = int(year_str)
+
+    # Load existing data
+    if os.path.exists(gameids_file):
+        with open(gameids_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    else:
+        data = {"games": []}
+
+    # Check for duplicate
+    if any(game["id"] == game_id for game in data["games"]):
+        print(f"Game ID {game_id} already exists.")
+        return False
+
+    # Append new game
+    data["games"].append({
+        "id": game_id,
+        "name": name.strip(),
+        "year": year
+    })
+
+    # Write back
+    with open(gameids_file, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4)
+
+    print(f"Game '{name.strip()}' ({year}) added.")
+    return True
 
 
 
@@ -246,32 +292,32 @@ if __name__ == "__main__":
     elapsed = end_time - start_time
     print(f"Time taken: {elapsed:.4f} seconds")
 
-    print(predict_game(612880))
+    # print(predict_game(612880))
 
 
-    results = []
-    with open(gameids_file, "r") as f:
-        for line in f:
-            line = line.strip()
-            line = line[:-1]
-            if not line:
-                continue
+    # results = []
+    # with open(gameids_file, "r") as f:
+    #     for line in f:
+    #         line = line.strip()
+    #         line = line[:-1]
+    #         if not line:
+    #             continue
 
-            try:
-                record = json.loads(line)
-                game_id = int(record.get("id"))
-            except (ValueError, json.JSONDecodeError, TypeError):
-                print("Invalid line:", line)
-                continue
+    #         try:
+    #             record = json.loads(line)
+    #             game_id = int(record.get("id"))
+    #         except (ValueError, json.JSONDecodeError, TypeError):
+    #             print("Invalid line:", line)
+    #             continue
 
-            print("Game ID:", game_id)
-            result = predict_game(game_id)
-            print("Result:", result)
+    #         print("Game ID:", game_id)
+    #         result = predict_game(game_id)
+    #         print("Result:", result)
 
-            if result:
-                results.append(result)
-            else:
-                results.append(f"Unknown Game ({game_id})")
+    #         if result:
+    #             results.append(result)
+    #         else:
+    #             results.append(f"Unknown Game ({game_id})")
 
-    print("\nFinal Results:")
-    print(results)
+    # print("\nFinal Results:")
+    # print(results)
