@@ -8,6 +8,9 @@ import time
 from datetime import datetime
 import requests
 
+import argparse
+
+
 from dotenv import load_dotenv  # type: ignore # noqa: F401
 
 # Read the .env variables.
@@ -37,7 +40,7 @@ def reformat_filename_steamdeck(filename: str) -> str:
         return filename
 
 
-def run_steamdeck(games: list) -> None:
+def run_steamdeck(games: list, nocreate: bool) -> None:
 
     source_path = f"{source}"
 
@@ -67,21 +70,25 @@ def run_steamdeck(games: list) -> None:
             if not in_json:
                 print(f"Game ID not present in game-ids.json: {game_id}")
                 print(f"\nPredicted game name:\n{predict_game(game_id)}")
-                response = input("Is this name correct? (y/n): ").strip().lower()
-                if response == "y":
-                    add_game_to_json(gameids_file, int(game_id), predict_game(game_id))
-                    print("Added to game-ids.json. Rerun script now.")
+                if nocreate:
+                    print("Exiting now, nocreate set to True")
+                    return
                 else:
-                    c_name = input("What is the correct name? ").strip()
-                    c_year = input("What is the correct year? ").strip().lower()
-                    try:
-                        if c_year == "":
-                            add_game_to_json(gameids_file, int(game_id), f"{c_name}")
-                        else:
-                            add_game_to_json(gameids_file, int(game_id), f"{c_name} ({c_year})")
-                    except Exception:
-                        print("game-ids.json not updated.")
-                return
+                    response = input("Is this name correct? (y/n): ").strip().lower()
+                    if response == "y":
+                        add_game_to_json(gameids_file, int(game_id), predict_game(game_id))
+                        print("Added to game-ids.json. Rerun script now.")
+                    else:
+                        c_name = input("What is the correct name? ").strip()
+                        c_year = input("What is the correct year? ").strip().lower()
+                        try:
+                            if c_year == "":
+                                add_game_to_json(gameids_file, int(game_id), f"{c_name}")
+                            else:
+                                add_game_to_json(gameids_file, int(game_id), f"{c_name} ({c_year})")
+                        except Exception:
+                            print("game-ids.json not updated.")
+                    return
         
 
         # Actually create the directories and move the files.
@@ -129,12 +136,6 @@ def run_steamdeck_old(games: list) -> None:
     """
     directories_created = 0
     images_moved = 0
-
-    # TODO:
-    # Whole logic needs to change
-    # It currently does for each item in game-ids.json
-    # Needs to instead do for every item in the filepath
-    # Aligned more with run_gamingpc()
 
     # For each item in the Dict:
     for game in games:
@@ -200,7 +201,7 @@ def reformat_filename_gamingpc(filename: str) -> str:
         return filename
 
 
-def run_gamingpc(games: list) -> None:
+def run_gamingpc(games: list, nocreate: bool) -> None:
     """Run with commands for a Linux-based gaming PC.
 
     Args:
@@ -212,7 +213,6 @@ def run_gamingpc(games: list) -> None:
     # For each item in the Dict:
     for game in games:
         # Record the details.
-        # game_id = game["id"]
         game_name = game["name"]
         game_year = game["year"]
 
@@ -248,13 +248,17 @@ def run_gamingpc(games: list) -> None:
             if not found:
                 print(f"Game ID not present in game-ids.json: {game_id}")
                 print(f"\nPredicted game name:\n{predict_game(game_id)}")
-                response = input("Is this name correct? (y/n): ").strip().lower()
-                if response == "y":
-                    add_game_to_json(gameids_file, int(game_id), predict_game(game_id))
-                    print("Added to game-ids.json. Rerun script now.")
+                if nocreate:
+                    print("Exiting now, nocreate set to True")
+                    return
                 else:
-                    print("game-ids.json not updated.")
-                return
+                    response = input("Is this name correct? (y/n): ").strip().lower()
+                    if response == "y":
+                        add_game_to_json(gameids_file, int(game_id), predict_game(game_id))
+                        print("Added to game-ids.json. Rerun script now.")
+                    else:
+                        print("game-ids.json not updated.")
+                    return
 
             no_gameid = file_name.split("_")[1]
             new_file_name = reformat_filename_gamingpc(no_gameid)
@@ -262,10 +266,6 @@ def run_gamingpc(games: list) -> None:
                 destination_path, os.path.dirname(relative_path), subdirectory, new_file_name
             )
             destination_file_dir = os.path.dirname(destination_file)
-
-
-            # print(destination_file_dir)
-            # print("HER")
 
             # Create the directory if it doesn't exist.
             if not os.path.exists(destination_file_dir):
@@ -275,8 +275,6 @@ def run_gamingpc(games: list) -> None:
             # Copy the file over if it doesn't exist.
             if not os.path.exists(destination_file):
                 shutil.copy2(source_file, destination_file)
-                # print(destination_file)
-                # print(f"Copied: {source_file} -> {destination_file}")
                 images_moved = images_moved + 1
 
     completed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -357,9 +355,20 @@ def add_game_to_json(gameids_file: str, game_id: int, directory_name: str):
     return True
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Filter screenshots with optional flags")
+    parser.add_argument(
+        "--nocreate",
+        action="store_true",
+        help="If set, disables creating directories (sets nocreate=True)"
+    )
+    return parser.parse_args()
+
 
 if __name__ == "__main__":
     start_time = time.time()
+    args = parse_args()
+    nocreate = args.nocreate
 
     # Convert the .json into a Dict.
     with open(gameids_file) as json_file:
@@ -368,40 +377,10 @@ if __name__ == "__main__":
 
     device = os.getenv("DEVICE")
     if device == "DECK":
-        run_steamdeck(games)
+        run_steamdeck(games, nocreate)
     if device == "GAMINGPC":
-        run_gamingpc(games)
+        run_gamingpc(games, nocreate)
 
     end_time = time.time()
     elapsed = end_time - start_time
     print(f"Time taken: {elapsed:.4f} seconds")
-
-    # print(predict_game(612880))
-
-
-    # results = []
-    # with open(gameids_file, "r") as f:
-    #     for line in f:
-    #         line = line.strip()
-    #         line = line[:-1]
-    #         if not line:
-    #             continue
-
-    #         try:
-    #             record = json.loads(line)
-    #             game_id = int(record.get("id"))
-    #         except (ValueError, json.JSONDecodeError, TypeError):
-    #             print("Invalid line:", line)
-    #             continue
-
-    #         print("Game ID:", game_id)
-    #         result = predict_game(game_id)
-    #         print("Result:", result)
-
-    #         if result:
-    #             results.append(result)
-    #         else:
-    #             results.append(f"Unknown Game ({game_id})")
-
-    # print("\nFinal Results:")
-    # print(results)
