@@ -6,6 +6,7 @@ import re
 import shutil
 import time
 from datetime import datetime
+import requests
 
 from dotenv import load_dotenv  # type: ignore # noqa: F401
 
@@ -155,8 +156,7 @@ def run_gamingpc(games: list) -> None:
                     subdirectory = f"{game_name} ({game_date})"
 
             if not found:
-                print(games)
-                print(f"{game_id}")
+                print(f"Game ID not present in game-ids.json: {game_id}")
                 return
 
             no_gameid = file_name.split("_")[1]
@@ -193,6 +193,41 @@ def run_gamingpc(games: list) -> None:
     print(f"{completed_at} - Created {directories_created} directories and copied {images_moved} images")
 
 
+def predict_game(game_id: str):
+    # Call the Steam API to get the game name.
+    url = f"https://store.steampowered.com/api/appdetails?appids={game_id}"
+    response = requests.get(url)
+    data = response.json()
+    app_data = data.get(str(game_id), {}).get("data", {})
+    
+    # Exit if no game found.
+    game_data = data.get(str(game_id))
+    if not game_data or not game_data.get("success"):
+        return None
+
+    name = app_data.get("name", None)
+    release_date_str = app_data.get("release_date", {}).get("date", "")
+
+    # Clean up the name.
+    name = name.replace(":", " -")
+    name = name.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+    name = re.sub(r"[®™©]", "", name)
+    name = re.sub(r'[\\/*?:"<>|]', "", name)
+    name = name.strip()
+    
+    # Extract year using regex.
+    match = re.search(r"\b(19|20)\d{2}\b", release_date_str)
+    year = match.group(0) if match else None
+    
+    if name and year:
+        return f"{name} ({year})"
+    elif name:
+        return name
+    else:
+        return None
+
+
+
 if __name__ == "__main__":
     start_time = time.time()
 
@@ -210,3 +245,33 @@ if __name__ == "__main__":
     end_time = time.time()
     elapsed = end_time - start_time
     print(f"Time taken: {elapsed:.4f} seconds")
+
+    print(predict_game(612880))
+
+
+    results = []
+    with open(gameids_file, "r") as f:
+        for line in f:
+            line = line.strip()
+            line = line[:-1]
+            if not line:
+                continue
+
+            try:
+                record = json.loads(line)
+                game_id = int(record.get("id"))
+            except (ValueError, json.JSONDecodeError, TypeError):
+                print("Invalid line:", line)
+                continue
+
+            print("Game ID:", game_id)
+            result = predict_game(game_id)
+            print("Result:", result)
+
+            if result:
+                results.append(result)
+            else:
+                results.append(f"Unknown Game ({game_id})")
+
+    print("\nFinal Results:")
+    print(results)
