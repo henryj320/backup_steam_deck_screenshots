@@ -38,6 +38,90 @@ def reformat_filename_steamdeck(filename: str) -> str:
 
 
 def run_steamdeck(games: list) -> None:
+
+    source_path = f"{source}"
+
+    for root, dirs, files in os.walk(source_path):
+
+        # Make it so thumbnails aren't copied.
+        dirs[:] = [d for d in dirs if d != "thumbnails"]
+
+        # If a root game directory.
+        if len(dirs) > 0:
+
+
+            # Get the game ID
+            game_id = os.path.relpath(root, source)
+
+            # Skip for top level.
+            if game_id == ".":
+                continue
+
+            # Find those already in game-ids.json.
+            in_json = False
+            for game in games:
+                if game["id"] == int(game_id):
+                    in_json = True
+
+            # Add game to game-ids.json if wanted.
+            if not in_json:
+                print(f"Game ID not present in game-ids.json: {game_id}")
+                print(f"\nPredicted game name:\n{predict_game(game_id)}")
+                response = input("Is this name correct? (y/n): ").strip().lower()
+                if response == "y":
+                    add_game_to_json(gameids_file, int(game_id), predict_game(game_id))
+                    print("Added to game-ids.json. Rerun script now.")
+                else:
+                    c_name = input("What is the correct name? ").strip()
+                    c_year = input("What is the correct year? ").strip().lower()
+                    try:
+                        if c_year == "":
+                            add_game_to_json(gameids_file, int(game_id), f"{c_name}")
+                        else:
+                            add_game_to_json(gameids_file, int(game_id), f"{c_name} ({c_year})")
+                    except Exception:
+                        print("game-ids.json not updated.")
+                return
+        
+
+        # Actually create the directories and move the files.
+        directories_created = 0
+        images_moved = 0
+        for game in games:
+            # Record the details.
+            game_id = game["id"]
+            game_name = game["name"]
+            game_year = game["year"]
+            destination_path = f"{dest}/{game_name} ({game_year})" if int(game_year) != 0 else f"{dest}/{game_name}"
+            for file_name in files:
+
+                # If the Game ID matches one in game-ids.json.
+                if game_id == int(os.path.relpath(root, source).split('/')[0]):
+
+                    source_file = os.path.join(root, file_name)
+                    relative_path = os.path.relpath(source_file, source_path)
+
+                    new_file_name = reformat_filename_steamdeck(file_name)
+                    destination_file = os.path.join(destination_path, new_file_name)
+                    destination_file_dir = os.path.dirname(destination_file)
+
+                    # Create the directory if it doesn't exist.
+                    if not os.path.exists(destination_file_dir):
+                        os.makedirs(destination_file_dir)
+                        directories_created = directories_created + 1
+
+                    # Copy the file over if it doesn't exist.
+                    if not os.path.exists(destination_file):
+                        shutil.copy2(source_file, destination_file)
+                        # print(f"Copied: {source_file} -> {destination_file}")
+                        images_moved = images_moved + 1
+                    
+                    continue
+
+    return
+
+
+def run_steamdeck_old(games: list) -> None:
     """Run with commands specialised for the Steam Deck.
 
     Args:
