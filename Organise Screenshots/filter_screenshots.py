@@ -47,6 +47,8 @@ def run_steamdeck(games: list, nocreate: bool) -> None:  # noqa: C901, PLR0912
     """
     source_path = f"{source}"
 
+    directories_created = 0
+    images_moved = 0
     for root, dirs, files in os.walk(source_path):
         # Make it so thumbnails aren't copied.
         dirs[:] = [d for d in dirs if d != "thumbnails"]
@@ -91,8 +93,6 @@ def run_steamdeck(games: list, nocreate: bool) -> None:  # noqa: C901, PLR0912
                     return
 
         # Actually create the directories and move the files.
-        directories_created = 0
-        images_moved = 0
         for game in games:
             # Record the details.
             game_id = game["id"]
@@ -120,6 +120,9 @@ def run_steamdeck(games: list, nocreate: bool) -> None:  # noqa: C901, PLR0912
                         images_moved = images_moved + 1
 
                     continue
+
+    completed_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    print(f"{completed_at} - Created {directories_created} directories and copied {images_moved} images")
 
     return
 
