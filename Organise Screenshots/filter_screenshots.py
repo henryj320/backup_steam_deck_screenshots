@@ -157,21 +157,25 @@ def run_gamingpc(games: list, nocreate: bool) -> None:  # noqa: C901, PLR0912
     images_moved = 0
 
     # For each item in the Dict:
-    for game in games:
-        # Record the details.
-        game_name = game["name"]
-        game_year = game["year"]
+    # for game in games:
+    #     # Record the details.
+    #     game_name = game["name"]
+    #     game_year = game["year"]
 
-        source_path = f"{source}"
-        # Change destination based on if the year is set or not.
-        destination_path = f"{dest}/{game_name} ({game_year})" if int(game_year) != 0 else f"{dest}/{game_name}"
+    #     source_path = f"{source}"
+    #     # Change destination based on if the year is set or not.
+    #     if int(game_year) != 0:
+    #         destination_path = f"{dest}/{game_name} ({game_year})"
+    #     else:
+    #         destination_path = f"{dest}/{game_name}"
 
         # Create the directory if not already created.
-        if not os.path.exists(destination_path):
-            os.makedirs(destination_path)
-            directories_created = directories_created + 1
+        # if not os.path.exists(destination_path):
+        #     os.makedirs(destination_path)
+        #     directories_created = directories_created + 1
 
-    destination_path = dest
+    source_path = f"{source}"
+    # destination_path = dest
     # Copy images from "source/id/screenshots" to "destination/name (year)" if not already copied.
     for root, dirs, files in os.walk(source_path):
         # Make it so thumbnails aren't copied.
@@ -181,6 +185,8 @@ def run_gamingpc(games: list, nocreate: bool) -> None:  # noqa: C901, PLR0912
             source_file = os.path.join(root, file_name)
             relative_path = os.path.relpath(source_file, source_path)
 
+            destination_path = dest
+            subdirectory = ""
             game_id = file_name.split("_")[0]
             found = False
             for game in games:
@@ -188,7 +194,11 @@ def run_gamingpc(games: list, nocreate: bool) -> None:  # noqa: C901, PLR0912
                     game_name = game["name"]
                     game_date = game["year"]
                     found = True
-                    subdirectory = f"{game_name} ({game_date})"
+                    if int(game_date) != 0:
+                        subdirectory = f"{game_name} ({game_date})"
+                    else:
+                        subdirectory = game_name
+                destination_path = f"{dest}/{subdirectory}"
 
             if not found:
                 print(f"Game ID not present in game-ids.json: {game_id}")
@@ -202,13 +212,21 @@ def run_gamingpc(games: list, nocreate: bool) -> None:  # noqa: C901, PLR0912
                         add_game_to_json(gameids_file, int(game_id), predict_game(game_id))
                         print("Added to game-ids.json. Rerun script now.")
                     else:
-                        print("game-ids.json not updated.")
+                        c_name = input("What is the correct name? ").strip()
+                        c_year = input("What is the correct year? ").strip().lower()
+                        try:
+                            if c_year == "":
+                                add_game_to_json(gameids_file, int(game_id), f"{c_name}")
+                            else:
+                                add_game_to_json(gameids_file, int(game_id), f"{c_name} ({c_year})")
+                        except Exception:
+                            print("game-ids.json not updated.")
                     return
 
             no_gameid = file_name.split("_")[1]
             new_file_name = reformat_filename_gamingpc(no_gameid)
             destination_file = os.path.join(
-                destination_path, os.path.dirname(relative_path), subdirectory, new_file_name
+                destination_path, os.path.dirname(relative_path), new_file_name
             )
             destination_file_dir = os.path.dirname(destination_file)
 
@@ -282,13 +300,13 @@ def add_game_to_json(gameids_file: str, game_id: int, directory_name: str) -> bo
     Returns:
         bool: _description_
     """
-    match = re.match(r"^(.*?)\s*\((\d{4})\)$", directory_name)
+    match = re.match(r"^(.*?)\s*(?:\((\d{4})\))?$", directory_name)
     if not match:
         print("Directory name format should be 'Game Name (Year)'")
         return False
 
     name, year_str = match.groups()
-    year = int(year_str)
+    year = int(year_str) if year_str else 0
 
     # Load existing data
     if os.path.exists(gameids_file):
