@@ -34,16 +34,16 @@ fi
 echo
 
 show_progress "Filtering Steam Deck screenshots"
-python3 /home/software/repositories/backup_steam_deck_screenshots/Organise-Steam-Deck/filter_screenshots.py
+python3 /home/software/repositories/backup_steam_deck_screenshots/Organise-Steam-Deck/filter_screenshots.py --nocreate
 show_progress "Completed filtering Steam Deck screenshots"
 echo
 
 show_progress "Filtering Gaming PC screenshots"
-python3 /home/software/repositories/backup_steam_deck_screenshots/Organise-Be-Quiet-PC/filter_screenshots.py
+python3 /home/software/repositories/backup_steam_deck_screenshots/Organise-Be-Quiet-PC/filter_screenshots.py --nocreate
 show_progress "Completed filtering Gaming PC screenshots"
 echo
 
 start_end_progress "🎉 All tasks completed successfully!"
 echo
 
-curl -d "Whale Server - Pull and filter complete" ntfy.sh/whale_server_1
+curl -d "Whale Server - Automatic pull and filter complete" ntfy.sh/whale_server_1

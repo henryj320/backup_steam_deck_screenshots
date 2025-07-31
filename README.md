@@ -1,9 +1,7 @@
 # backup_steam_deck_screenshots
 
-Last update: 2024-11-30 22:15
+Last update: 2025-05-27 22:38
 <br><br>
-
-A small repository containing the service files, timers and Python scripts required to back up Steam Deck pictures onto an alternative location.
 
 ## backup_steam_deck_screenshots
 
@@ -14,6 +12,26 @@ A small repository containing the service files, timers and Python scripts requi
 **Date Completed**: 2024-10-11
 
 **Language**: Python, Bash, Systemctl
+
+---
+
+## Overview
+
+A small repository containing the service files, timers and Python scripts required to back up Steam Deck pictures onto an alternative location.
+
+```mermaid
+flowchart TD;
+    A@{ shape: rounded, label: "Cron" }
+    A1@{ shape: sl-rect, label: "User Input" }
+    E@{ shape: lin-cyl, label: "Whale Server" }
+
+    A --> B[pull_and_filter.sh];
+    A1 --> B[pull_and_filter.sh];
+    B --> C[pull_screenshots.sh]
+    B --> D[filter_screenshots.py]
+    C -->|Upload Screenshots| E
+    D -->|Reorganise| E
+```
 
 ---
 
